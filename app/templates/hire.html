@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% block title %}Hire a venue{% endblock %}
+{% from "_macros.html" import csrf with context %}
+{% block content %}
+<h1 class="h2 mb-3">Hire a whole venue</h1>
+<div class="row g-4"><div class="col-lg-6">
+<form class="panel" method="post" action="/hire">{{ csrf() }}
+ <label class="form-label" for="venue_id">Venue</label>
+ <select class="form-select mb-3" id="venue_id" name="venue_id" required>
+  {% for v in venues %}<option value="{{ v.id }}" {{ 'selected' if form.venue_id == v.id|string }}>{{ v.name }} · up to {{ v.capacity }} guests · {{ v.hourly_rate|money }}/h</option>{% endfor %}</select>
+ <div class="row g-2 mb-3">
+  <div class="col-6"><label class="form-label" for="start">Start</label><input class="form-control" id="start" type="datetime-local" name="start" step="1800" value="{{ form.start }}" required></div>
+  <div class="col-6"><label class="form-label" for="end">End</label><input class="form-control" id="end" type="datetime-local" name="end" step="1800" value="{{ form.end }}" required></div></div>
+ <label class="form-label" for="guests">Guests</label>
+ <input class="form-control mb-3" id="guests" type="number" name="guests" min="1" value="{{ form.guests }}" required>
+ <label class="form-label" for="purpose">Purpose</label>
+ <input class="form-control mb-3" id="purpose" name="purpose" maxlength="300" value="{{ form.purpose }}" placeholder="Farewell, reception, club meeting…" required>
+ <button class="btn btn-teal w-100">Get an instant decision</button>
+ <p class="small muted mt-2 mb-0">Hours 08:00–23:00, 24 hours' notice. Weekends cost 25% more; blocks from 18:00 cost 15% more.</p>
+</form></div>
+<div class="col-lg-6">
+{% if proposal %}
+<div class="panel border-warning mb-3"><h2 class="h5">We can't do that slot, but here are options</h2>
+ <p class="small">{{ proposal.reason }}</p>
+ {% if proposal.times %}<div class="fw-semibold small mb-1">Same venue, other times</div>
+  {% for t in proposal.times %}<a class="btn btn-sm btn-outline-teal me-1 mb-1" href="{{ t.url }}">{{ t.start.replace('T',' ') }} → {{ t.end[11:] }}</a>{% endfor %}{% endif %}
+ {% if proposal.venues %}<div class="fw-semibold small mt-2 mb-1">Other venues, same time</div>
+  {% for v in proposal.venues %}<a class="btn btn-sm btn-outline-teal me-1 mb-1" href="{{ v.url }}">{{ v.venue_name }} · {{ v.price|money }}</a>{% endfor %}{% endif %}
+</div>{% endif %}
+<h2 class="h5">My requests</h2>
+{% for r in mine %}<div class="panel mb-2"><div class="d-flex justify-content-between"><strong>{{ r.venue.name }}</strong>
+ <span class="badge text-bg-{{ {'confirmed':'success','pending':'warning','rejected':'danger'}[r.status] }}">{{ r.status }}</span></div>
+ <div class="small">{{ r.start|dt }} – {{ r.end.strftime('%H:%M') }} · {{ r.guests }} guests · {{ r.price|money }}</div>
+ <div class="small muted">{{ r.reason }}</div></div>
+{% else %}<div class="panel muted">No requests yet.</div>{% endfor %}
+</div></div>{% endblock %}

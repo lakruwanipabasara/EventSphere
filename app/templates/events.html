@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block title %}Events · EventSphere{% endblock %}
+{% block content %}
+<div class="hero"><h1>Find your next event</h1>
+ <p>Book concerts, workshops and seminars, or hire a whole venue. Your ticket is a QR code on your phone.</p>
+ <div class="search" role="search">
+  <input name="q" form="filters" value="{{ f.q }}" placeholder="Search events" aria-label="Search events">
+  <button class="btn btn-accent" form="filters">Search</button></div>
+ <div class="chips">
+  <a class="chip {{ 'on' if not f.category }}" href="/events">All</a>
+  {% for c in event_categories %}<a class="chip {{ 'on' if f.category == c }}" href="/events?category={{ c }}">{{ c }}</a>{% endfor %}
+  <a class="chip" href="/hire">Hire a venue</a>
+ </div></div>
+<form class="panel mb-4" id="filters" method="get" action="/events">
+ <div class="row g-2">
+  <div class="col-6 col-md-3"><select class="form-select" name="category" aria-label="Category"><option value="">All categories</option>
+   {% for c in event_categories %}<option {{ 'selected' if f.category == c }}>{{ c }}</option>{% endfor %}</select></div>
+  <div class="col-6 col-md-3"><select class="form-select" name="venue_id" aria-label="Venue"><option value="">All venues</option>
+   {% for v in venues %}<option value="{{ v.id }}" {{ 'selected' if f.venue_id == v.id|string }}>{{ v.name }}</option>{% endfor %}</select></div>
+  <div class="col-6 col-md-3"><input class="form-control" type="number" min="0" name="max_price" value="{{ f.max_price }}" placeholder="Max price (Rs)" aria-label="Max price"></div>
+  <div class="col-6 col-md-3"><input class="form-control" type="date" name="date_from" value="{{ f.date_from }}" aria-label="From date"></div>
+  <div class="col-6 col-md-3"><input class="form-control" type="date" name="date_to" value="{{ f.date_to }}" aria-label="To date"></div>
+  <div class="col-12 col-md-3 d-grid"><button class="btn btn-teal">Apply filters</button></div>
+ </div>
+</form>
+<div class="row g-3">
+{% for e in events %}
+ <div class="col-12 col-lg-6"><a class="text-decoration-none text-reset" href="/events/{{ e.id }}">
+  <div class="stub"><div class="stub-main">
+   <div class="muted small">{{ e.category }} · {{ e.venue.name }}</div>
+   <h2 class="h5 my-1">{{ e.title }}</h2>
+   <div class="small">{{ e.start|dt }}</div>
+   <div class="small mt-1">From <strong>{{ (e.categories|map(attribute='price')|min)|money if e.categories else '–' }}</strong>
+    {% set left = e.categories|sum(attribute='quantity') - e.categories|sum(attribute='sold') - e.categories|sum(attribute='held') %}
+    · {% if left > 0 %}{{ left }} left{% else %}<span class="text-danger">sold out · waitlist open</span>{% endif %}</div>
+  </div><div class="stub-side"><div class="day">{{ e.start.strftime('%d') }}</div><div class="mon">{{ e.start.strftime('%b') }}</div></div></div></a></div>
+{% else %}<div class="col-12"><div class="panel muted">No events match. Clear a filter or check back soon.</div></div>{% endfor %}
+</div>{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block title %}Agent messages{% endblock %}
+{% from "_macros.html" import msg_table %}
+{% block content %}<h1 class="h2 mb-2">Agent message log</h1>
+<p class="muted">Every message between agents, with its conversation id. Click an id to follow one user action across agents.</p>
+<form class="d-flex gap-2 mb-3" method="get"><input class="form-control" name="conv" value="{{ conv }}" placeholder="Conversation id" aria-label="Conversation id">
+ <button class="btn btn-teal">Filter</button>{% if conv %}<a class="btn btn-outline-secondary" href="/admin/messages">Clear</a>{% endif %}</form>
+<div class="panel">{{ msg_table(messages) }}</div>{% endblock %}

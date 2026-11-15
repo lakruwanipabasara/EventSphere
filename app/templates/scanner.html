@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% block title %}Gate scanner{% endblock %}
+{% block content %}
+<h1 class="h2 mb-3">Gate scanner</h1>
+<div class="panel mb-3">
+ <label class="form-label" for="event">Event at this gate</label>
+ <select class="form-select" id="event">{% for e in events %}<option value="{{ e.id }}">{{ e.title }} · {{ e.start|dt }}</option>{% endfor %}</select>
+</div>
+<div class="panel mb-3 text-center">
+ <div id="reader"></div>
+ <button class="btn btn-teal mt-2" id="start-cam">Start camera</button>
+ <button class="btn btn-outline-secondary mt-2" id="stop-cam" hidden>Stop camera</button>
+</div>
+<form class="panel mb-3" id="manual"><label class="form-label" for="code">No camera? Type the ticket code</label>
+ <div class="d-flex gap-2"><input class="form-control" id="code" autocomplete="off" autocapitalize="off" required><button class="btn btn-teal">Check</button></div></form>
+<div id="scan-result" class="text-center" hidden></div>
+{% endblock %}
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+const token = document.querySelector('meta[name="csrf-token"]').content;
+const box = document.getElementById("scan-result");
+let last = {code: "", at: 0}, scanner = null;
+async function check(code) {
+  const eventId = parseInt(document.getElementById("event").value, 10);
+  if (!eventId) { show(false, "Choose an event first."); return; }
+  try {
+    const r = await fetch("/staff/scan", {method: "POST", headers: {"Content-Type": "application/json", "X-CSRF-Token": token},
+      body: JSON.stringify({code: code, event_id: eventId})});
+    const d = await r.json();
+    if (!r.ok) { show(false, d.detail || "Scan failed."); return; }
+    show(d.ok, d.ok ? "ADMIT · " + d.holder + " · " + d.category : d.message + (d.suspicious ? " ⚠ Possible shared screenshot." : ""));
+  } catch (e) { show(false, "Network error. Try again."); }
+}
+function show(ok, text) {
+  box.hidden = false; box.textContent = text;
+  box.style.background = ok ? "#15803D" : "#B91C1C"; box.style.color = "#fff";
+  if (navigator.vibrate) navigator.vibrate(ok ? 80 : [120, 60, 120]);
+}
+document.getElementById("manual").addEventListener("submit", function (e) {
+  e.preventDefault(); check(document.getElementById("code").value.trim()); this.reset();
+});
+document.getElementById("start-cam").addEventListener("click", async function () {
+  scanner = new Html5Qrcode("reader");
+  try {
+    await scanner.start({facingMode: "environment"}, {fps: 10, qrbox: 220}, function (text) {
+      const now = Date.now();
+      if (text === last.code && now - last.at < 3000) return;   // ignore the same frame repeating
+      last = {code: text, at: now}; check(text);
+    }, function () {});
+    this.hidden = true; document.getElementById("stop-cam").hidden = false;
+  } catch (err) { show(false, "Camera unavailable. Use manual entry below."); }
+});
+document.getElementById("stop-cam").addEventListener("click", async function () {
+  if (scanner) { await scanner.stop(); scanner.clear(); }
+  this.hidden = true; document.getElementById("start-cam").hidden = false;
+});
+</script>
+{% endblock %}

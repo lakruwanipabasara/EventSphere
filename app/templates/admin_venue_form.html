@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}Venue{% endblock %}
+{% from "_macros.html" import csrf with context %}
+{% block content %}<h1 class="h2 mb-3">{{ 'Edit' if v else 'Add' }} venue</h1>
+<form class="panel" method="post" action="/admin/venues/save">{{ csrf() }}
+<input type="hidden" name="venue_id" value="{{ v.id if v else '' }}">
+<div class="row g-3">
+ <div class="col-md-6"><label class="form-label" for="name">Name</label><input class="form-control" id="name" name="name" value="{{ v.name if v else '' }}" required></div>
+ <div class="col-md-6"><label class="form-label" for="location">Location</label><input class="form-control" id="location" name="location" value="{{ v.location if v else '' }}"></div>
+ <div class="col-6 col-md-3"><label class="form-label" for="capacity">Capacity</label><input class="form-control" id="capacity" type="number" min="1" name="capacity" value="{{ v.capacity if v else '' }}" required></div>
+ <div class="col-6 col-md-3"><label class="form-label" for="rate">Hourly hire rate (Rs)</label><input class="form-control" id="rate" type="number" min="0" step="0.01" name="hourly_rate" value="{{ v.hourly_rate if v else 0 }}" required></div>
+ <div class="col-12 col-md-6"><label class="form-label" for="image">Image URL</label><input class="form-control" id="image" name="image_url" value="{{ v.image_url if v else '' }}" placeholder="https://…"></div>
+ <div class="col-12"><label class="form-label" for="desc">Description</label><textarea class="form-control" id="desc" name="description" rows="3">{{ v.description if v else '' }}</textarea></div>
+ <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="hire" name="open_for_hire" value="1" {{ 'checked' if v and v.open_for_hire }}><label class="form-check-label" for="hire">Open for private hire</label></div></div>
+</div><button class="btn btn-teal mt-3">Save venue</button> <a class="btn btn-outline-secondary mt-3" href="/admin/venues">Cancel</a></form>{% endblock %}

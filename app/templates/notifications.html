@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block title %}Notifications{% endblock %}
+{% block content %}<h1 class="h2 mb-3">Notifications</h1>
+{% for n in items %}<div class="panel mb-2"><div>{{ n.message }}</div><div class="small muted">{{ n.created_at|dt }}{% if n.role %} · admin alert{% endif %}</div></div>
+{% else %}<div class="panel muted">Nothing yet. Booking, waitlist and hire updates will appear here.</div>{% endfor %}{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block title %}Manage events{% endblock %}
+{% from "_macros.html" import csrf with context %}
+{% block content %}<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h2 m-0">Events</h1>
+<a class="btn btn-teal" href="/admin/events/new">Create event</a></div>
+{% for e in events %}<div class="panel mb-2"><div class="d-flex justify-content-between flex-wrap gap-2">
+ <div><strong>{{ e.title }}</strong> <span class="badge text-bg-{{ {'published':'success','draft':'secondary','cancelled':'danger'}[e.status] }}">{{ e.status }}</span>
+  <div class="small muted">{{ e.start|dt }} · {{ e.venue.name }}</div></div>
+ <div class="d-flex gap-2 align-items-start">
+  {% if e.status != 'cancelled' %}<a class="btn btn-sm btn-outline-teal" href="/admin/events/{{ e.id }}/edit">Edit</a>{% endif %}
+  {% if e.status == 'published' %}<form method="post" action="/admin/events/{{ e.id }}/cancel" onsubmit="return confirm('Cancel this event and refund everyone in full?')">{{ csrf() }}
+   <button class="btn btn-sm btn-outline-danger">Cancel event</button></form>{% endif %}
+ </div></div></div>
+{% else %}<div class="panel muted">No events yet.</div>{% endfor %}{% endblock %}

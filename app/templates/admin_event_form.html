@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% block title %}Event{% endblock %}
+{% from "_macros.html" import csrf with context %}
+{% block content %}<h1 class="h2 mb-3">{{ 'Edit' if ev else 'Create' }} event</h1>
+{% if error %}<div class="alert alert-danger"><strong>{{ error }}</strong>
+ {% if suggestions %}<div class="mt-2 small">Free slots at this venue:
+  {% for s in suggestions %}<span class="badge text-bg-light border me-1">{{ s.start.replace('T',' ') }} → {{ s.end[11:] }}</span>{% endfor %}</div>{% endif %}</div>{% endif %}
+{% set f = form or {} %}
+<form class="panel" method="post" action="/admin/events/save">{{ csrf() }}
+<input type="hidden" name="event_id" value="{{ ev.id if ev else '' }}">
+<div class="row g-3">
+ <div class="col-md-8"><label class="form-label" for="title">Title</label><input class="form-control" id="title" name="title" value="{{ f.title if form else (ev.title if ev else '') }}" required></div>
+ <div class="col-md-4"><label class="form-label" for="category">Category</label><select class="form-select" id="category" name="category">
+  {% set cur = f.category if form else (ev.category if ev else 'Other') %}{% for c in event_categories %}<option {{ 'selected' if cur == c }}>{{ c }}</option>{% endfor %}</select></div>
+ <div class="col-md-4"><label class="form-label" for="venue">Venue</label><select class="form-select" id="venue" name="venue_id" required>
+  {% set curv = f.venue_id if form else (ev.venue_id if ev else 0) %}{% for v in venues %}<option value="{{ v.id }}" {{ 'selected' if curv == v.id }}>{{ v.name }} (cap. {{ v.capacity }})</option>{% endfor %}</select></div>
+ <div class="col-6 col-md-4"><label class="form-label" for="start">Start</label><input class="form-control" id="start" type="datetime-local" name="start" value="{{ f.start if form else (ev.start|dtinput if ev else '') }}" required></div>
+ <div class="col-6 col-md-4"><label class="form-label" for="end">End</label><input class="form-control" id="end" type="datetime-local" name="end" value="{{ f.end if form else (ev.end|dtinput if ev else '') }}" required></div>
+ <div class="col-12"><label class="form-label" for="desc">Description</label><textarea class="form-control" id="desc" name="description" rows="3">{{ f.description if form else (ev.description if ev else '') }}</textarea></div>
+</div>
+<h2 class="h5 mt-4">Ticket categories</h2>
+<p class="small muted">Total tickets cannot exceed the venue's capacity. Clear a name to remove an unsold category.</p>
+<div id="cat-rows">
+{% if form %}{% for rid, n, p, q in f.rows %}
+ <div class="row g-2 mb-2"><input type="hidden" name="cat_id" value="{{ rid }}"><div class="col-5"><input class="form-control" name="cat_name" value="{{ n }}" placeholder="Name" aria-label="Category name"></div>
+  <div class="col-4"><input class="form-control" type="number" min="0" step="0.01" name="cat_price" value="{{ p }}" placeholder="Price" aria-label="Price"></div>
+  <div class="col-3"><input class="form-control" type="number" min="1" name="cat_qty" value="{{ q }}" placeholder="Qty" aria-label="Quantity"></div></div>{% endfor %}
+{% elif ev %}{% for c in ev.categories %}
+ <div class="row g-2 mb-2"><input type="hidden" name="cat_id" value="{{ c.id }}"><div class="col-5"><input class="form-control" name="cat_name" value="{{ c.name }}" aria-label="Category name"></div>
+  <div class="col-4"><input class="form-control" type="number" min="0" step="0.01" name="cat_price" value="{{ c.price }}" aria-label="Price"></div>
+  <div class="col-3"><input class="form-control" type="number" min="1" name="cat_qty" value="{{ c.quantity }}" aria-label="Quantity"></div></div>{% endfor %}
+{% else %}
+ <div class="row g-2 mb-2"><input type="hidden" name="cat_id" value=""><div class="col-5"><input class="form-control" name="cat_name" placeholder="Name (e.g. Standard)" aria-label="Category name"></div>
+  <div class="col-4"><input class="form-control" type="number" min="0" step="0.01" name="cat_price" placeholder="Price" aria-label="Price"></div>
+  <div class="col-3"><input class="form-control" type="number" min="1" name="cat_qty" placeholder="Qty" aria-label="Quantity"></div></div>
+{% endif %}</div>
+<template id="cat-row"><div class="row g-2 mb-2"><input type="hidden" name="cat_id" value=""><div class="col-5"><input class="form-control" name="cat_name" placeholder="Name" aria-label="Category name"></div>
+ <div class="col-4"><input class="form-control" type="number" min="0" step="0.01" name="cat_price" placeholder="Price" aria-label="Price"></div>
+ <div class="col-3"><input class="form-control" type="number" min="1" name="cat_qty" placeholder="Qty" aria-label="Quantity"></div></div></template>
+<button type="button" class="btn btn-sm btn-outline-teal" id="add-cat">Add category</button>
+<div class="mt-4 d-flex gap-2 flex-wrap">
+ {% if not ev or ev.status == 'draft' %}<button class="btn btn-outline-secondary" name="action" value="draft">Save draft</button>{% endif %}
+ <button class="btn btn-teal" name="action" value="publish">{{ 'Save changes' if ev and ev.status == 'published' else 'Save &amp; publish'|safe }}</button>
+ <a class="btn btn-link" href="/admin/events">Cancel</a></div>
+</form>{% endblock %}

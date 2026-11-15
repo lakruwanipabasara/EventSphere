@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}Booking #{{ b.id }}{% endblock %}
+{% from "_macros.html" import csrf with context %}
+{% block content %}
+<a href="/bookings" class="small">← All bookings</a>
+<h1 class="h2 mt-2">{{ b.event.title }}</h1>
+<p class="muted mb-1">{{ b.event.start|dt }} · {{ b.event.venue.name }}</p>
+<div class="panel mb-3">
+ <div class="d-flex justify-content-between"><span>{{ b.quantity }} × {{ b.category.name }} @ {{ b.unit_price|money }}</span><strong>{{ b.total|money }}</strong></div>
+ <div class="small muted">Payment ref (simulated): {{ b.payment_ref }} · Status: {{ b.status }}</div>
+ {% if b.status == 'cancelled' %}<div class="small mt-1">{{ b.cancel_reason }}. Refund {{ b.refund_amount|money }}{% if b.refund_ref %} (ref {{ b.refund_ref }}){% endif %}.</div>{% endif %}
+ {% if can_cancel %}
+ <hr><p class="small mb-2">Refund policy: 100% if cancelled 7+ days before the start, 50% from 2 to 7 days, none within 48 hours.
+  Cancelling now refunds <strong>{{ refund_if_cancelled|money }}</strong> ({{ pct }}%).</p>
+ <form method="post" action="/bookings/{{ b.id }}/cancel" onsubmit="return confirm('Cancel this booking?')">{{ csrf() }}
+  <button class="btn btn-outline-danger btn-sm">Cancel booking</button></form>
+ {% endif %}
+</div>
+<div class="row g-3">
+{% for t in b.tickets %}
+ <div class="col-12 col-sm-6 col-lg-4"><div class="panel text-center {{ 'ticket-used' if t.status != 'valid' }}">
+  <div class="small muted">Ticket {{ loop.index }} of {{ b.quantity }}</div>
+  {% if t.status == 'cancelled' %}<div class="py-5 text-danger fw-bold">CANCELLED</div>
+  {% else %}<img class="qr my-2" src="/tickets/{{ t.id }}/qr.png" alt="QR code for ticket {{ loop.index }}">{% endif %}
+  <div><span class="badge text-bg-{{ 'success' if t.status == 'valid' else 'secondary' }}">{{ t.status }}</span></div>
+  {% if t.status == 'valid' %}<div class="small muted mt-1">Manual code: <code>{{ t.code }}</code></div>{% endif %}
+ </div></div>
+{% endfor %}</div>{% endblock %}

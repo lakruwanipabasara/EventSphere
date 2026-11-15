@@ -1,0 +1,48 @@
+{% extends "base.html" %}{% block title %}{{ ev.title }}{% endblock %}
+{% from "_macros.html" import csrf with context %}
+{% block content %}
+<div class="row g-4"><div class="col-lg-7">
+ <div class="muted">{{ ev.category }} · {{ ev.venue.name }}, {{ ev.venue.location }}</div>
+ <h1 class="h2">{{ ev.title }}</h1>
+ {% if ev.status != 'published' %}<span class="badge text-bg-{{ 'danger' if ev.status == 'cancelled' else 'secondary' }}">{{ ev.status }}</span>{% endif %}
+ <p class="mb-1">{{ ev.start|dt }} – {{ ev.end.strftime('%H:%M') }}</p>
+ <p>{{ ev.description }}</p>
+ {% if ev.venue.image_url %}<img class="venue-img" src="{{ ev.venue.image_url }}" alt="{{ ev.venue.name }}">{% endif %}
+</div>
+<div class="col-lg-5"><h2 class="h5">Tickets</h2>
+{% if ev.status == 'cancelled' %}<div class="alert alert-danger">This event was cancelled. Bookings were refunded in full.</div>{% endif %}
+{% if ev.status == 'published' and not open_for_sale %}<div class="alert alert-warning">Ticket sales closed: this event has already started.</div>{% endif %}
+{% for c in ev.categories %}
+ <div class="panel mb-3">
+  <div class="d-flex justify-content-between"><strong>{{ c.name }}</strong><span>{{ c.price|money }}</span></div>
+  <div class="small muted mb-2">{% if c.available > 0 %}{{ c.available }} left of {{ c.quantity }}{% else %}Sold out{% endif %}</div>
+  {% if open_for_sale %}
+   {% if c.available > 0 %}
+    {% if user %}
+    <form method="post" action="/events/{{ ev.id }}/book" class="d-flex gap-2">{{ csrf() }}
+     <input type="hidden" name="category_id" value="{{ c.id }}">
+     <input class="form-control" style="max-width:90px" type="number" name="quantity" value="1" min="1" max="6" aria-label="Quantity">
+     <button class="btn btn-accent flex-fill">Pay &amp; book (simulated)</button></form>
+    {% else %}<a class="btn btn-teal w-100" href="/login?next=/events/{{ ev.id }}">Sign in to book</a>{% endif %}
+   {% elif user %}
+    {% set en = mine.get(c.id) %}
+    {% if en and en.status == 'held' %}
+     <div class="alert alert-success mb-2">{{ en.quantity }} seat(s) held for you. Time left:
+      <span class="countdown" data-seconds="{{ remaining[en.id] }}"></span></div>
+     <form method="post" action="/waitlist/{{ en.id }}/claim" class="d-inline">{{ csrf() }}<button class="btn btn-teal claim">Claim seats</button></form>
+     <form method="post" action="/waitlist/{{ en.id }}/leave" class="d-inline">{{ csrf() }}<button class="btn btn-outline-secondary">Give up</button></form>
+    {% elif en %}
+     <div class="small mb-2">You are on the waitlist for {{ en.quantity }} ticket(s).</div>
+     <form method="post" action="/waitlist/{{ en.id }}/leave">{{ csrf() }}<button class="btn btn-sm btn-outline-secondary">Leave waitlist</button></form>
+    {% else %}
+     <form method="post" action="/events/{{ ev.id }}/waitlist" class="d-flex gap-2">{{ csrf() }}
+      <input type="hidden" name="category_id" value="{{ c.id }}">
+      <input class="form-control" style="max-width:90px" type="number" name="quantity" value="1" min="1" max="6" aria-label="Quantity">
+      <button class="btn btn-outline-teal flex-fill">Join waitlist</button></form>
+    {% endif %}
+   {% else %}<a class="btn btn-outline-teal w-100" href="/login?next=/events/{{ ev.id }}">Sign in to join the waitlist</a>{% endif %}
+  {% endif %}
+ </div>
+{% endfor %}
+{% if user %}<p class="small muted">Waitlist offers hold your seats for a limited time, then pass to the next person.</p>{% endif %}
+</div></div>{% endblock %}

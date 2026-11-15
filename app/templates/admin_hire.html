@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Hire requests{% endblock %}
+{% from "_macros.html" import csrf with context %}
+{% block content %}<h1 class="h2 mb-3">Private hire requests</h1>
+{% for r in requests %}<div class="panel mb-2"><div class="d-flex justify-content-between flex-wrap gap-2">
+ <div><strong>{{ r.venue.name }}</strong> <span class="badge text-bg-{{ {'confirmed':'success','pending':'warning','rejected':'danger'}[r.status] }}">{{ r.status }}</span>
+  <div class="small">{{ r.start|dt }} – {{ r.end.strftime('%H:%M') }} · {{ r.guests }} guests · {{ r.price|money }}</div>
+  <div class="small muted">{{ r.user.name }} · {{ r.purpose }} · {{ r.reason }}</div></div>
+ {% if r.status == 'pending' %}<form method="post" action="/admin/hire/{{ r.id }}/decide" class="d-flex gap-2 align-items-start">{{ csrf() }}
+  <input class="form-control form-control-sm" name="note" placeholder="Note (optional)" aria-label="Note">
+  <button class="btn btn-sm btn-teal" name="decision" value="approve">Approve</button>
+  <button class="btn btn-sm btn-outline-danger" name="decision" value="reject">Reject</button></form>{% endif %}
+</div></div>{% else %}<div class="panel muted">No hire requests yet.</div>{% endfor %}{% endblock %}

@@ -1,0 +1,16 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% endmacro %}
+{% macro perf(p) %}
+{% set c = {'REQUEST':'secondary','AGREE':'success','REFUSE':'danger','PROPOSE':'warning','INFORM':'info','FAILURE':'dark'} %}
+<span class="badge text-bg-{{ c.get(p,'secondary') }} perf">{{ p }}</span>
+{% endmacro %}
+{% macro msg_table(messages) %}
+<div class="table-responsive"><table class="table table-sm align-middle">
+<thead><tr><th>Time</th><th>Conversation</th><th>From → To</th><th>Type</th><th>Content</th></tr></thead><tbody>
+{% for m in messages %}
+<tr><td class="small text-nowrap">{{ m.timestamp.strftime('%d %b %H:%M:%S') }}</td>
+<td><a href="/admin/messages?conv={{ m.conversation_id }}" class="small">{{ m.conversation_id }}</a></td>
+<td class="small text-nowrap">{{ m.sender }} → {{ m.receiver }}</td>
+<td>{{ perf(m.performative) }}</td><td class="msg-content">{{ m.content }}</td></tr>
+{% else %}<tr><td colspan="5" class="muted">No messages yet.</td></tr>{% endfor %}
+</tbody></table></div>
+{% endmacro %}

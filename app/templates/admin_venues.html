@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Venues{% endblock %}
+{% block content %}<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h2 m-0">Venues</h1>
+<a class="btn btn-teal" href="/admin/venues/new">Add venue</a></div>
+<div class="row g-3">{% for v in venues %}<div class="col-md-6"><div class="panel h-100">
+ {% if v.image_url %}<img src="{{ v.image_url }}" alt="" class="img-fluid rounded mb-2" style="max-height:140px;object-fit:cover;width:100%">{% endif %}
+ <div class="d-flex justify-content-between"><strong>{{ v.name }}</strong><span class="badge text-bg-{{ 'success' if v.open_for_hire else 'secondary' }}">{{ 'open for hire' if v.open_for_hire else 'not for hire' }}</span></div>
+ <div class="small muted">{{ v.location }} · capacity {{ v.capacity }} · {{ v.hourly_rate|money }}/h</div>
+ <p class="small my-2">{{ v.description }}</p><a href="/admin/venues/{{ v.id }}/edit">Edit</a></div></div>
+{% else %}<div class="col-12"><div class="panel muted">No venues yet.</div></div>{% endfor %}</div>{% endblock %}
