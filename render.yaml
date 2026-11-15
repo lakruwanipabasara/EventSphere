@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: eventsphere
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: DATABASE_URL
+        fromDatabase:
+          name: eventsphere-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: AGENT_API_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SEED_DEMO
+        value: "true"
+databases:
+  - name: eventsphere-db
+    plan: free
